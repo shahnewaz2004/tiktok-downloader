@@ -23,14 +23,14 @@ import {
 
 
 export default function App() {
-  const video = useRef(null);
   let [fontsLoaded] = useFonts({
      Poppins_400Regular,
      Poppins_500Medium,
   });
 
   const [url, setUrl] = useState('');
-  const [fetchedVideo, setVideo] = useState(null);
+  const [Videos, setVideo] = useState([]);
+  const [isLoading, setLoading] = useState(false);
   
   const paste = async () => {
     const text = await Clipboard.getStringAsync();
@@ -38,7 +38,8 @@ export default function App() {
   };
 
 
-  const download = () => {
+  const fetch = () => {
+    setLoading(prev => !prev);
     const options = {
       method: 'GET',
       url: 'https://tiktok-video-no-watermark2.p.rapidapi.com/',
@@ -50,9 +51,11 @@ export default function App() {
     };
     
     axios.request(options).then(function (response) {
-      setVideo(response.data.data);
+      setVideo([...Videos, response.data.data]);
+      setLoading(prev => !prev);
     }).catch(function (error) {
-      alert("Could't download")
+      setLoading(prev => !prev);
+      alert("Could't download");
     });
   }
 
@@ -73,20 +76,23 @@ export default function App() {
             <Feather onPress={paste} style={styles.clipboard} name='clipboard' />
           </View>
 
-          <View onStartShouldSetResponder={download} style={styles.button}>
-            <Text style={styles.buttonText}>Download</Text>
+          <View onStartShouldSetResponder={fetch} style={styles.button}>
+           {
+            isLoading &&
+              <ActivityIndicator color='white' />
+           }
+           {
+            !isLoading &&
+             <Text style={styles.buttonText}>Download</Text>
+           }
           </View>
             {
-              // fetchedVideo &&
-              <ScrollView style={{height: '70%', marginTop: 30}} showsVerticalScrollIndicator={false}>
-                <Result />
-                <Result />
-                <Result />
-                <Result />
-                <Result />
-                <Result />
-              </ScrollView>
-             
+              Videos.length > 0 &&
+                <ScrollView style={{height: '70%', marginTop: 30}} showsVerticalScrollIndicator={false}>
+                  {
+                    Videos.map((value, index) => <Result key={index} result={value} />)
+                  }
+                </ScrollView>
             }
         </View>
             {/* <Video ref={video} source={{uri: fetchedVideo}} useNativeControls isLooping style={{width: 300, height: 200}}/> */}
